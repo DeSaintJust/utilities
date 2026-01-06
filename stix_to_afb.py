@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 STIX to Attack Flow Builder (AFB) Converter
 
