@@ -1,0 +1,430 @@
+// =============================================================================
+// ATTACK FLOW BUILDER (AFB) - SIMPLIFIED REFERENCE
+// =============================================================================
+// This guide helps you generate valid .afb files step-by-step.
+// Follow the numbered steps and use the templates provided.
+
+// =============================================================================
+// STEP 1: FILE SKELETON
+// =============================================================================
+// Every AFB file has this exact structure. Copy this and fill in the arrays.
+
+{
+    "schema": "attack_flow_v2",
+    "theme": "dark_theme",
+    "objects": [],
+    "layout": {},
+    "camera": { "x": 0, "y": 300, "k": 0.7 }
+}
+
+// =============================================================================
+// STEP 2: GENERATE UUIDs
+// =============================================================================
+// Before creating objects, generate all UUIDs you'll need.
+// Format: 8-4-4-4-12 hexadecimal (e.g., "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+//
+// You need UUIDs for:
+//   - 1 flow object
+//   - Each action, condition, operator, note, infrastructure, course_of_action
+//   - Each dynamic_line (connection)
+//   - Each anchor (12 per action/operator/note/infrastructure, 11 per condition)
+//   - Each latch (2 per connection: source + target)
+//   - Each handle (1 per connection)
+
+// =============================================================================
+// STEP 3: CREATE THE FLOW OBJECT (exactly one, always first)
+// =============================================================================
+// TEMPLATE - Copy and fill in:
+
+{
+    "id": "flow",
+    "instance": "YOUR-FLOW-UUID",
+    "properties": [
+        ["name", "Your Attack Flow Title"],
+        ["description", "Description of the attack"],
+        ["author", [
+            ["name", "Author Name"],
+            ["identity_class", null],
+            ["contact_information", "email@example.com"]
+        ]],
+        ["scope", "incident"],
+        ["external_references", []],
+        ["created", "2024-01-15T12:00:00.000Z"]
+    ],
+    "objects": [
+        // LIST ALL instance UUIDs here EXCEPT anchors, latches, handles
+        // Include: actions, conditions, operators, dynamic_lines, notes, etc.
+    ]
+}
+
+// =============================================================================
+// STEP 4: CREATE ACTION OBJECTS
+// =============================================================================
+// Actions represent attack steps/techniques.
+// TEMPLATE - Copy for each action:
+
+{
+    "id": "action",
+    "instance": "YOUR-ACTION-UUID",
+    "properties": [
+        ["name", "Action Name"],
+        ["tactic_id", "TA0001"],
+        ["tactic_ref", null],
+        ["technique_id", "T1133"],
+        ["technique_ref", null],
+        ["description", "What the attacker does"],
+        ["confidence", null],
+        ["execution_start", null],
+        ["execution_end", null],
+        ["ttp", [
+            ["tactic", "TA0001"],
+            ["technique", "T1133"]
+        ]]
+    ],
+    "anchors": {
+        "0": "ANCHOR-UUID-0",
+        "30": "ANCHOR-UUID-30",
+        "60": "ANCHOR-UUID-60",
+        "90": "ANCHOR-UUID-90",
+        "120": "ANCHOR-UUID-120",
+        "150": "ANCHOR-UUID-150",
+        "180": "ANCHOR-UUID-180",
+        "210": "ANCHOR-UUID-210",
+        "240": "ANCHOR-UUID-240",
+        "270": "ANCHOR-UUID-270",
+        "300": "ANCHOR-UUID-300",
+        "330": "ANCHOR-UUID-330"
+    }
+}
+
+// =============================================================================
+// STEP 5: CREATE CONDITION OBJECTS (if needed)
+// =============================================================================
+// Conditions are decision points (diamond shape).
+// IMPORTANT: Conditions have only 9 positional anchors (NO 240, 270, 300)
+//            plus branch:True and branch:False (11 total)
+// TEMPLATE:
+
+{
+    "id": "condition",
+    "instance": "YOUR-CONDITION-UUID",
+    "properties": [
+        ["description", "Is the condition true?"],
+        ["pattern", null],
+        ["pattern_type", null],
+        ["pattern_version", null],
+        ["date", null]
+    ],
+    "anchors": {
+        "0": "ANCHOR-UUID-0",
+        "30": "ANCHOR-UUID-30",
+        "60": "ANCHOR-UUID-60",
+        "90": "ANCHOR-UUID-90",
+        "120": "ANCHOR-UUID-120",
+        "150": "ANCHOR-UUID-150",
+        "180": "ANCHOR-UUID-180",
+        "210": "ANCHOR-UUID-210",
+        "330": "ANCHOR-UUID-330",
+        "branch:True": "ANCHOR-UUID-TRUE",
+        "branch:False": "ANCHOR-UUID-FALSE"
+    }
+}
+
+// =============================================================================
+// STEP 6: CREATE OPERATOR OBJECTS (if needed)
+// =============================================================================
+// AND_operator: all inputs must occur for output
+// OR_operator: any input triggers output
+// TEMPLATE:
+
+{
+    "id": "AND_operator",
+    "instance": "YOUR-OPERATOR-UUID",
+    "properties": [
+        ["operator", "AND"]
+    ],
+    "anchors": {
+        "0": "ANCHOR-UUID-0",
+        "30": "ANCHOR-UUID-30",
+        "60": "ANCHOR-UUID-60",
+        "90": "ANCHOR-UUID-90",
+        "120": "ANCHOR-UUID-120",
+        "150": "ANCHOR-UUID-150",
+        "180": "ANCHOR-UUID-180",
+        "210": "ANCHOR-UUID-210",
+        "240": "ANCHOR-UUID-240",
+        "270": "ANCHOR-UUID-270",
+        "300": "ANCHOR-UUID-300",
+        "330": "ANCHOR-UUID-330"
+    }
+}
+
+// For OR_operator, change "id" to "OR_operator" and "operator" to "OR"
+
+// =============================================================================
+// STEP 7: CREATE ANCHOR OBJECTS
+// =============================================================================
+// Every anchor UUID referenced in an object's "anchors" dict needs an anchor object.
+//
+// ANCHOR TYPE RULES:
+//   horizontal_anchor: positions 0, 30, 150, 180, 210, 330
+//   vertical_anchor: positions 60, 90, 120, 240, 270, 300, branch:True, branch:False
+//
+// TEMPLATE for horizontal_anchor:
+{
+    "id": "horizontal_anchor",
+    "instance": "YOUR-ANCHOR-UUID",
+    "latches": []
+}
+
+// TEMPLATE for vertical_anchor:
+{
+    "id": "vertical_anchor",
+    "instance": "YOUR-ANCHOR-UUID",
+    "latches": []
+}
+
+// =============================================================================
+// STEP 8: CREATE CONNECTIONS (dynamic_line + latch + handle)
+// =============================================================================
+// To connect Object A to Object B, you need 4 things:
+//   1. A latch on Object A's anchor (source)
+//   2. A latch on Object B's anchor (target)
+//   3. A handle for the line midpoint
+//   4. A dynamic_line linking them
+//
+// WHICH ANCHORS TO USE:
+//   Top-to-bottom flow: source "180" (bottom) -> target "0" (top)
+//   Left-to-right flow: source "90" (right) -> target "270" (left)
+//   Condition true branch: source "branch:True" -> target "0"
+//   Condition false branch: source "branch:False" -> target "0"
+//
+// SUB-STEP 8a: Create latch for source anchor
+{
+    "id": "generic_latch",
+    "instance": "SOURCE-LATCH-UUID"
+}
+
+// SUB-STEP 8b: Create latch for target anchor
+{
+    "id": "generic_latch",
+    "instance": "TARGET-LATCH-UUID"
+}
+
+// SUB-STEP 8c: Create handle
+{
+    "id": "generic_handle",
+    "instance": "HANDLE-UUID"
+}
+
+// SUB-STEP 8d: Create dynamic_line
+{
+    "id": "dynamic_line",
+    "instance": "LINE-UUID",
+    "source": "SOURCE-LATCH-UUID",
+    "target": "TARGET-LATCH-UUID",
+    "handles": ["HANDLE-UUID"]
+}
+
+// SUB-STEP 8e: Add latch UUID to source anchor's "latches" array
+// SUB-STEP 8f: Add latch UUID to target anchor's "latches" array
+// SUB-STEP 8g: Add dynamic_line UUID to flow.objects array
+
+// =============================================================================
+// STEP 9: SET LAYOUT POSITIONS
+// =============================================================================
+// Every object needs an [x, y] position in the layout dict.
+//
+// POSITIONING RULES:
+//   - Flow object: [-700, -100] (top-left, out of the way)
+//   - First attack object: [0, 0]
+//   - Each subsequent object: add 200 to y (vertical flow)
+//   - Parallel objects: spread horizontally by 250
+//   - Condition branches: True branch at [-150, y], False at [150, y]
+//
+// EXAMPLE LAYOUT for linear flow:
+"layout": {
+    "flow-uuid": [-700, -100],
+    "action-1-uuid": [0, 0],
+    "action-2-uuid": [0, 200],
+    "action-3-uuid": [0, 400]
+}
+
+// ANCHOR POSITIONS (offset from parent object):
+//   Position 0 (top): parent_x, parent_y - 50
+//   Position 90 (right): parent_x + 100, parent_y
+//   Position 180 (bottom): parent_x, parent_y + 50
+//   Position 270 (left): parent_x - 100, parent_y
+//   branch:True: parent_x + 50, parent_y + 30
+//   branch:False: parent_x - 50, parent_y + 30
+
+// LATCH POSITIONS: same as anchor, offset 10px toward connection
+// HANDLE POSITIONS: midpoint between source and target latches
+
+// =============================================================================
+// COMPLETE MINIMAL EXAMPLE: Two actions connected
+// =============================================================================
+{
+    "schema": "attack_flow_v2",
+    "theme": "dark_theme",
+    "objects": [
+        {
+            "id": "flow",
+            "instance": "f0000000-0000-0000-0000-000000000001",
+            "properties": [
+                ["name", "Simple Attack Flow"],
+                ["description", "Two-step attack"],
+                ["author", [["name", "Analyst"], ["identity_class", null], ["contact_information", ""]]],
+                ["scope", "incident"],
+                ["external_references", []],
+                ["created", "2024-01-15T12:00:00.000Z"]
+            ],
+            "objects": [
+                "a0000000-0000-0000-0000-000000000001",
+                "a0000000-0000-0000-0000-000000000002",
+                "d0000000-0000-0000-0000-000000000001"
+            ]
+        },
+        {
+            "id": "action",
+            "instance": "a0000000-0000-0000-0000-000000000001",
+            "properties": [
+                ["name", "Initial Access"],
+                ["tactic_id", "TA0001"],
+                ["tactic_ref", null],
+                ["technique_id", "T1133"],
+                ["technique_ref", null],
+                ["description", "Attacker gains initial access"],
+                ["confidence", null],
+                ["execution_start", null],
+                ["execution_end", null],
+                ["ttp", [["tactic", "TA0001"], ["technique", "T1133"]]]
+            ],
+            "anchors": {
+                "0": "anc-a1-0", "30": "anc-a1-30", "60": "anc-a1-60",
+                "90": "anc-a1-90", "120": "anc-a1-120", "150": "anc-a1-150",
+                "180": "anc-a1-180", "210": "anc-a1-210", "240": "anc-a1-240",
+                "270": "anc-a1-270", "300": "anc-a1-300", "330": "anc-a1-330"
+            }
+        },
+        {
+            "id": "action",
+            "instance": "a0000000-0000-0000-0000-000000000002",
+            "properties": [
+                ["name", "Execution"],
+                ["tactic_id", "TA0002"],
+                ["tactic_ref", null],
+                ["technique_id", "T1059"],
+                ["technique_ref", null],
+                ["description", "Attacker executes malicious code"],
+                ["confidence", null],
+                ["execution_start", null],
+                ["execution_end", null],
+                ["ttp", [["tactic", "TA0002"], ["technique", "T1059"]]]
+            ],
+            "anchors": {
+                "0": "anc-a2-0", "30": "anc-a2-30", "60": "anc-a2-60",
+                "90": "anc-a2-90", "120": "anc-a2-120", "150": "anc-a2-150",
+                "180": "anc-a2-180", "210": "anc-a2-210", "240": "anc-a2-240",
+                "270": "anc-a2-270", "300": "anc-a2-300", "330": "anc-a2-330"
+            }
+        },
+        {"id": "horizontal_anchor", "instance": "anc-a1-0", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a1-30", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-60", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-90", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-120", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a1-150", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a1-180", "latches": ["latch-src-1"]},
+        {"id": "horizontal_anchor", "instance": "anc-a1-210", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-240", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-270", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a1-300", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a1-330", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a2-0", "latches": ["latch-tgt-1"]},
+        {"id": "horizontal_anchor", "instance": "anc-a2-30", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-60", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-90", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-120", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a2-150", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a2-180", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a2-210", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-240", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-270", "latches": []},
+        {"id": "vertical_anchor", "instance": "anc-a2-300", "latches": []},
+        {"id": "horizontal_anchor", "instance": "anc-a2-330", "latches": []},
+        {"id": "generic_latch", "instance": "latch-src-1"},
+        {"id": "generic_latch", "instance": "latch-tgt-1"},
+        {"id": "generic_handle", "instance": "handle-1"},
+        {
+            "id": "dynamic_line",
+            "instance": "d0000000-0000-0000-0000-000000000001",
+            "source": "latch-src-1",
+            "target": "latch-tgt-1",
+            "handles": ["handle-1"]
+        }
+    ],
+    "layout": {
+        "f0000000-0000-0000-0000-000000000001": [-700, -100],
+        "a0000000-0000-0000-0000-000000000001": [0, 0],
+        "a0000000-0000-0000-0000-000000000002": [0, 200],
+        "anc-a1-0": [0, -50], "anc-a1-30": [45, -35], "anc-a1-60": [87, -25],
+        "anc-a1-90": [100, 0], "anc-a1-120": [87, 25], "anc-a1-150": [45, 35],
+        "anc-a1-180": [0, 50], "anc-a1-210": [-45, 35], "anc-a1-240": [-87, 25],
+        "anc-a1-270": [-100, 0], "anc-a1-300": [-87, -25], "anc-a1-330": [-45, -35],
+        "anc-a2-0": [0, 150], "anc-a2-30": [45, 165], "anc-a2-60": [87, 175],
+        "anc-a2-90": [100, 200], "anc-a2-120": [87, 225], "anc-a2-150": [45, 235],
+        "anc-a2-180": [0, 250], "anc-a2-210": [-45, 235], "anc-a2-240": [-87, 225],
+        "anc-a2-270": [-100, 200], "anc-a2-300": [-87, 175], "anc-a2-330": [-45, 165],
+        "latch-src-1": [0, 60],
+        "latch-tgt-1": [0, 140],
+        "handle-1": [0, 100]
+    },
+    "camera": {"x": 0, "y": 100, "k": 1.0}
+}
+
+// =============================================================================
+// QUICK REFERENCE: ANCHOR TYPES BY POSITION
+// =============================================================================
+//
+//          330(H)   0(H)   30(H)
+//              \     |     /
+//       300(V)  +----+----+  60(V)
+//               |         |
+//       270(V)--+         +--90(V)
+//               |         |
+//       240(V)  +----+----+  120(V)
+//              /     |     \
+//          210(H)  180(H)  150(H)
+//
+// (H) = horizontal_anchor
+// (V) = vertical_anchor
+//
+// CONDITIONS: Missing 240, 270, 300. Has branch:True(V) and branch:False(V)
+
+// =============================================================================
+// VALIDATION CHECKLIST
+// =============================================================================
+// Before finalizing, verify:
+// [ ] schema is "attack_flow_v2"
+// [ ] theme is "dark_theme" or "light_theme"
+// [ ] Exactly one flow object with id "flow"
+// [ ] flow.objects contains UUIDs of all actions, conditions, operators, dynamic_lines
+// [ ] flow.objects does NOT contain anchor, latch, or handle UUIDs
+// [ ] Every action has 12 anchors (0,30,60,90,120,150,180,210,240,270,300,330)
+// [ ] Every condition has 11 anchors (0,30,60,90,120,150,180,210,330,branch:True,branch:False)
+// [ ] Every anchor UUID has a matching anchor object
+// [ ] Anchor types match positions (see chart above)
+// [ ] Each connection has: source latch, target latch, handle, dynamic_line
+// [ ] Latch UUIDs are in their anchor's "latches" array
+// [ ] Every object instance UUID has a layout entry
+// [ ] Layout coordinates are [x, y] number arrays
+
+// =============================================================================
+// ADDITIONAL OBJECT TYPES (same anchor pattern as action)
+// =============================================================================
+// These all have 12 anchors like actions. Use when needed:
+//
+// note: {"id": "note", "properties": [["abstract","Title"],["content","Text"],["authors",[]]]}
+// infrastructure: {"id": "infrastructure", "properties": [["name",""],["description",""],["infrastructure_types",[]],["aliases",[]],["kill_chain_phases",[]],["first_seen",null],["last_seen",null]]}
+// course_of_action: {"id": "course_of_action", "properties": [["name",""],["description",""],["action_type","textual:text/plain"],["os_execution_envs",[]],["action_reference",null],["action_bin",null]]}
