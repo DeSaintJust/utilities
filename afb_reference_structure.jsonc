@@ -1,0 +1,589 @@
+// =============================================================================
+// ATTACK FLOW BUILDER (AFB) FILE STRUCTURE REFERENCE
+// =============================================================================
+// This is the native format used by MITRE's Attack Flow Builder tool.
+// File extension: .afb (JSON format)
+// Schema version: attack_flow_v2
+// =============================================================================
+
+{
+    // =========================================================================
+    // TOP-LEVEL PROPERTIES
+    // =========================================================================
+
+    "schema": "attack_flow_v2",          // REQUIRED: Always "attack_flow_v2"
+    "theme": "dark_theme",               // REQUIRED: "dark_theme" or "light_theme"
+
+    // =========================================================================
+    // OBJECTS ARRAY
+    // =========================================================================
+    // Contains ALL objects in the flow. Order matters for rendering.
+    // Recommended order: flow -> conditions -> actions -> operators ->
+    //                    infrastructure -> notes -> course_of_action ->
+    //                    dynamic_lines -> anchors -> latches -> handles
+
+    "objects": [
+        // =====================================================================
+        // FLOW OBJECT (Canvas/Container) - Exactly ONE per file
+        // =====================================================================
+        {
+            "id": "flow",                           // REQUIRED: Always "flow"
+            "instance": "uuid-here",                // REQUIRED: Unique UUID
+            "properties": [
+                ["name", "Attack Flow Name"],       // Flow title
+                ["description", "Description"],     // Flow description
+                ["author", [                        // Author information tuple
+                    ["name", "Author Name"],
+                    ["identity_class", null],       // null or string like "individual", "organization"
+                    ["contact_information", "email@example.com"]
+                ]],
+                ["scope", "incident"],              // "incident", "campaign", "threat-assessment", "attack-tree", "other"
+                ["external_references", [           // List of external references
+                    ["unique-id-hex",               // 32-char hex ID for each reference
+                        [
+                            ["source_name", "Reference Title"],
+                            ["description", "Reference description"],
+                            ["url", "https://example.com"]
+                        ]
+                    ]
+                ]],
+                ["created", "2022-10-27T02:44:54.520Z"]  // ISO 8601 timestamp
+            ],
+            "objects": [                            // REQUIRED: List of instance UUIDs
+                // UUIDs of all objects EXCEPT anchors, latches, and handles
+                // Includes: conditions, actions, operators, infrastructure, notes, dynamic_lines
+                "condition-uuid",
+                "action-uuid-1",
+                "action-uuid-2",
+                "dynamic_line-uuid"
+            ]
+        },
+
+        // =====================================================================
+        // CONDITION OBJECT (Diamond shape - decision point)
+        // =====================================================================
+        // IMPORTANT: Conditions have ONLY 9 positional anchors (missing 240, 270, 300)
+        // plus branch:True and branch:False anchors (11 total)
+        {
+            "id": "condition",                      // REQUIRED: Always "condition"
+            "instance": "uuid-here",                // REQUIRED: Unique UUID
+            "properties": [
+                ["description", "Condition description text"],
+                ["pattern", null],                  // Optional: STIX pattern string
+                ["pattern_type", null],             // Optional: "stix", "pcre", "sigma", etc.
+                ["pattern_version", null],          // Optional: Pattern version string
+                ["date", null]                      // Optional: ISO 8601 timestamp
+            ],
+            "anchors": {
+                // Positional anchors (degrees) - CONDITIONS OMIT 240, 270, 300
+                "0": "anchor-uuid",                 // Top (horizontal_anchor)
+                "30": "anchor-uuid",                // Top-right (horizontal_anchor)
+                "60": "anchor-uuid",                // Right-upper (vertical_anchor)
+                "90": "anchor-uuid",                // Right (vertical_anchor)
+                "120": "anchor-uuid",               // Right-lower (vertical_anchor)
+                "150": "anchor-uuid",               // Bottom-right (horizontal_anchor)
+                "180": "anchor-uuid",               // Bottom (horizontal_anchor)
+                "210": "anchor-uuid",               // Bottom-left (horizontal_anchor)
+                // NO 240, 270, 300 for conditions!
+                "330": "anchor-uuid",               // Top-left (horizontal_anchor)
+                // Branch anchors (for condition outcomes)
+                "branch:True": "anchor-uuid",       // True branch output (vertical_anchor)
+                "branch:False": "anchor-uuid"       // False branch output (vertical_anchor)
+            }
+        },
+
+        // =====================================================================
+        // ACTION OBJECT (Attack step/technique)
+        // =====================================================================
+        // Actions have ALL 12 positional anchors (0-330 at 30-degree intervals)
+        {
+            "id": "action",                         // REQUIRED: Always "action"
+            "instance": "uuid-here",                // REQUIRED: Unique UUID
+            "properties": [
+                ["name", "Action Name"],            // Short name (e.g., "External Remote Services")
+                ["tactic_id", "TA0001"],            // MITRE ATT&CK tactic ID (null if unknown)
+                ["tactic_ref", "x-mitre-tactic--uuid"], // STIX tactic reference (null if unknown)
+                ["technique_id", "T1133"],          // MITRE ATT&CK technique ID
+                ["technique_ref", "attack-pattern--uuid"], // STIX technique reference
+                ["description", "Detailed description of what the adversary does"],
+                ["confidence", null],               // Optional: Confidence level (null, or 0-100)
+                ["execution_start", null],          // Optional: ISO 8601 timestamp
+                ["execution_end", null],            // Optional: ISO 8601 timestamp
+                ["ttp", [                           // TTP tuple (derived from tactic/technique)
+                    ["tactic", "TA0001"],
+                    ["technique", "T1133"]
+                ]]
+            ],
+            "anchors": {
+                // ALL 12 positional anchors for actions/operators/infrastructure/notes
+                "0": "anchor-uuid",                 // Top (horizontal_anchor)
+                "30": "anchor-uuid",                // Top-right (horizontal_anchor)
+                "60": "anchor-uuid",                // Right-upper (vertical_anchor)
+                "90": "anchor-uuid",                // Right (vertical_anchor)
+                "120": "anchor-uuid",               // Right-lower (vertical_anchor)
+                "150": "anchor-uuid",               // Bottom-right (horizontal_anchor)
+                "180": "anchor-uuid",               // Bottom (horizontal_anchor)
+                "210": "anchor-uuid",               // Bottom-left (horizontal_anchor)
+                "240": "anchor-uuid",               // Left-lower (vertical_anchor)
+                "270": "anchor-uuid",               // Left (vertical_anchor)
+                "300": "anchor-uuid",               // Left-upper (vertical_anchor)
+                "330": "anchor-uuid"                // Top-left (horizontal_anchor)
+            }
+        },
+
+        // =====================================================================
+        // AND_OPERATOR / OR_OPERATOR (Logic gates)
+        // =====================================================================
+        {
+            "id": "AND_operator",                   // "AND_operator" or "OR_operator"
+            "instance": "uuid-here",
+            "properties": [
+                ["operator", "AND"]                 // "AND" or "OR"
+            ],
+            "anchors": {
+                // Same 12 anchors as actions
+                "0": "anchor-uuid", "30": "anchor-uuid", "60": "anchor-uuid",
+                "90": "anchor-uuid", "120": "anchor-uuid", "150": "anchor-uuid",
+                "180": "anchor-uuid", "210": "anchor-uuid", "240": "anchor-uuid",
+                "270": "anchor-uuid", "300": "anchor-uuid", "330": "anchor-uuid"
+            }
+        },
+
+        // =====================================================================
+        // INFRASTRUCTURE OBJECT
+        // =====================================================================
+        {
+            "id": "infrastructure",
+            "instance": "uuid-here",
+            "properties": [
+                ["name", "Infrastructure Name"],
+                ["description", "Description of the infrastructure"],
+                ["infrastructure_types", [          // List of [id, value] pairs
+                    ["32-char-hex-id", "unknown"]   // Types: "amplification", "anonymization", "botnet", etc.
+                ]],
+                ["aliases", []],                    // List of [id, value] pairs
+                ["kill_chain_phases", []],          // List of kill chain phases
+                ["first_seen", null],               // ISO 8601 timestamp
+                ["last_seen", null]                 // ISO 8601 timestamp
+            ],
+            "anchors": { /* Same 12 anchors as actions */ }
+        },
+
+        // =====================================================================
+        // NOTE OBJECT (Annotations/comments)
+        // =====================================================================
+        {
+            "id": "note",
+            "instance": "uuid-here",
+            "properties": [
+                ["abstract", "Short Title"],        // Brief summary/title
+                ["content", "Detailed note content"],
+                ["authors", []]                     // List of [id, author_name] pairs
+            ],
+            "anchors": { /* Same 12 anchors as actions */ }
+        },
+
+        // =====================================================================
+        // COURSE_OF_ACTION OBJECT (Mitigations/defenses)
+        // =====================================================================
+        {
+            "id": "course_of_action",
+            "instance": "uuid-here",
+            "properties": [
+                ["name", "Mitigation Name"],
+                ["description", "Detailed mitigation steps"],
+                ["action_type", "textual:text/plain"],  // or "textual:text/markdown"
+                ["os_execution_envs", []],
+                ["action_reference", null],
+                ["action_bin", null]
+            ],
+            "anchors": { /* Same 12 anchors as actions */ }
+        },
+
+        // =====================================================================
+        // DYNAMIC_LINE (Connections between objects)
+        // =====================================================================
+        // Connects two objects via their anchors through latches
+        {
+            "id": "dynamic_line",
+            "instance": "uuid-here",                // Include this UUID in flow.objects
+            "source": "latch-uuid",                 // UUID of source generic_latch
+            "target": "latch-uuid",                 // UUID of target generic_latch
+            "handles": ["handle-uuid"]              // Array of generic_handle UUIDs (usually 1)
+        },
+
+        // =====================================================================
+        // ANCHOR OBJECTS (Connection points on blocks)
+        // =====================================================================
+        // Each anchor referenced in an object's "anchors" dict needs an anchor object
+        // Anchor types based on position:
+        //   horizontal_anchor: positions 0, 30, 150, 180, 210, 330
+        //   vertical_anchor: positions 60, 90, 120, 240, 270, 300, branch:True, branch:False
+        {
+            "id": "horizontal_anchor",              // or "vertical_anchor"
+            "instance": "uuid-here",                // Must match UUID in object's anchors dict
+            "latches": []                           // Array of latch UUIDs connected to this anchor
+        },
+        {
+            "id": "vertical_anchor",
+            "instance": "uuid-here",
+            "latches": ["latch-uuid"]               // When connected, contains latch UUIDs
+        },
+
+        // =====================================================================
+        // GENERIC_LATCH (Connection endpoints)
+        // =====================================================================
+        // Latches attach to anchors and connect to dynamic_lines
+        {
+            "id": "generic_latch",
+            "instance": "uuid-here"                 // Referenced by dynamic_line source/target
+            // No other properties
+        },
+
+        // =====================================================================
+        // GENERIC_HANDLE (Line midpoint control)
+        // =====================================================================
+        // Handles control the curve/path of dynamic_lines
+        {
+            "id": "generic_handle",
+            "instance": "uuid-here"                 // Referenced by dynamic_line handles array
+            // No other properties
+        }
+    ],
+
+    // =========================================================================
+    // LAYOUT DICTIONARY
+    // =========================================================================
+    // Maps instance UUIDs to [x, y] pixel coordinates
+    // ALL instances (objects, anchors, latches, handles) should have layout entries
+    // See "LAYOUT BEST PRACTICES" section below for positioning guidelines
+    "layout": {
+        "flow-uuid": [-590, -235],                  // Flow object position (top-left area)
+        "condition-uuid": [-220, -980],             // Condition position
+        "action-uuid": [-190, -700],                // Action position
+        "anchor-uuid": [100, 200],                  // Anchor position (relative to object)
+        "latch-uuid": [150, 200],                   // Latch position (near anchor)
+        "handle-uuid": [300, 200]                   // Handle position (midpoint of line)
+    },
+
+    // =========================================================================
+    // CAMERA (Optional)
+    // =========================================================================
+    // Controls initial viewport when opening the file
+    "camera": {
+        "x": 0,                                     // X center coordinate
+        "y": 0,                                     // Y center coordinate
+        "k": 0.7                                    // Zoom level (1.0 = 100%, 0.5 = 50%)
+    }
+}
+
+// =============================================================================
+// LAYOUT BEST PRACTICES - CRITICAL FOR READABILITY
+// =============================================================================
+// Follow these guidelines to create clear, logical, and professional layouts.
+
+// -----------------------------------------------------------------------------
+// FLOW DIRECTION
+// -----------------------------------------------------------------------------
+// PRIMARY: Top-to-bottom (vertical flow) - RECOMMENDED for attack sequences
+//   - Time/sequence flows downward (earlier events at top, later at bottom)
+//   - Use anchors: source "180" (bottom) -> target "0" (top)
+//   - Condition branches: "branch:True"/"branch:False" flow downward
+//
+// ALTERNATIVE: Left-to-right (horizontal flow) - Good for timelines
+//   - Time flows left to right
+//   - Use anchors: source "90" (right) -> target "270" (left)
+//
+// NEVER MIX: Pick one primary direction and stick with it for the main flow.
+
+// -----------------------------------------------------------------------------
+// SPACING CONSTANTS (in pixels)
+// -----------------------------------------------------------------------------
+// Use these consistent values for professional-looking layouts:
+//
+// VERTICAL_SPACING = 200        // Between sequential objects (top-to-bottom)
+// HORIZONTAL_SPACING = 250      // Between parallel objects (left-to-right)
+// BRANCH_OFFSET = 150           // Horizontal offset for condition branches
+// AUXILIARY_OFFSET = 300        // Distance for notes/infrastructure from main flow
+// MITIGATION_OFFSET = 350       // Distance for course_of_action from actions
+// OPERATOR_FAN_ANGLE = 200      // Spread for objects fanning from AND/OR operator
+// OBJECT_WIDTH = 180            // Approximate width of action/condition blocks
+// OBJECT_HEIGHT = 100           // Approximate height of action blocks
+
+// -----------------------------------------------------------------------------
+// MAIN FLOW POSITIONING (Top-to-Bottom)
+// -----------------------------------------------------------------------------
+// Start the attack flow at a logical origin point:
+//
+// STEP 1: Position first object (usually a condition or action)
+//   first_object: [0, 0]  // Origin point
+//
+// STEP 2: Sequential objects go directly below
+//   second_object: [0, 200]      // y + VERTICAL_SPACING
+//   third_object: [0, 400]       // y + VERTICAL_SPACING * 2
+//   fourth_object: [0, 600]      // y + VERTICAL_SPACING * 3
+//
+// EXAMPLE - Simple linear flow:
+//   condition-1:    [0, 0]
+//   action-1:       [0, 200]
+//   action-2:       [0, 400]
+//   action-3:       [0, 600]
+
+// -----------------------------------------------------------------------------
+// CONDITION BRANCHING
+// -----------------------------------------------------------------------------
+// When a condition has True/False branches, offset them horizontally:
+//
+//                    [Condition]
+//                     /       \
+//            branch:True    branch:False
+//                  /             \
+//           [Action A]       [Action B]
+//             (left)          (right)
+//
+// POSITIONING:
+//   condition:        [0, 0]
+//   action-true:      [-BRANCH_OFFSET, 200]   // [-150, 200] - left branch
+//   action-false:     [+BRANCH_OFFSET, 200]   // [+150, 200] - right branch
+//
+// If branches reconverge later (e.g., both lead to same final action):
+//   final-action:     [0, 400]  // Back to center x-coordinate
+
+// -----------------------------------------------------------------------------
+// PARALLEL ACTIVITIES (AND/OR OPERATORS)
+// -----------------------------------------------------------------------------
+// When multiple actions happen in parallel, fan them out evenly:
+//
+//              [Operator]
+//            /  |  |  |  \
+//          A    B  C  D   E    (5 parallel actions)
+//
+// CALCULATE positions to center the fan:
+//   num_outputs = 5
+//   total_width = (num_outputs - 1) * HORIZONTAL_SPACING
+//   start_x = operator_x - (total_width / 2)
+//
+// EXAMPLE - 5 parallel actions from operator at [0, 200]:
+//   operator:    [0, 200]
+//   action-A:    [-500, 400]   // start_x + 0 * 250
+//   action-B:    [-250, 400]   // start_x + 1 * 250
+//   action-C:    [0, 400]      // start_x + 2 * 250 (center)
+//   action-D:    [250, 400]    // start_x + 3 * 250
+//   action-E:    [500, 400]    // start_x + 4 * 250
+//
+// For 3 parallel actions from operator at [0, 200]:
+//   operator:    [0, 200]
+//   action-A:    [-250, 400]
+//   action-B:    [0, 400]      // center
+//   action-C:    [250, 400]
+
+// -----------------------------------------------------------------------------
+// AUXILIARY OBJECTS (Infrastructure, Notes)
+// -----------------------------------------------------------------------------
+// Place these OUTSIDE the main attack flow to avoid clutter:
+//
+// INFRASTRUCTURE (C2 servers, hosting, etc.):
+//   - Position to the RIGHT of related actions
+//   - Connect using horizontal anchors (90 -> 270)
+//   - Offset: +AUXILIARY_OFFSET from the action's x-coordinate
+//
+//   Example - C2 connected to reverse shell action at [0, 400]:
+//     action-reverse-shell:  [0, 400]
+//     infra-c2-server:       [350, 400]    // Same y, offset right
+//
+// NOTES (contextual information):
+//   - Position to the LEFT of the main flow
+//   - Offset: -AUXILIARY_OFFSET from leftmost object
+//   - Stack vertically if multiple notes
+//
+//   Example - Notes for flow starting at x=0:
+//     note-tools:    [-350, 200]
+//     note-context:  [-350, 350]   // Below first note
+
+// -----------------------------------------------------------------------------
+// COURSE_OF_ACTION (Mitigations)
+// -----------------------------------------------------------------------------
+// Mitigations should be clearly associated with the actions they defend:
+//
+// POSITIONING STRATEGY:
+//   - Place to the RIGHT of the action they mitigate
+//   - Use MITIGATION_OFFSET (350px) for clear visual separation
+//   - Align vertically with the action
+//   - Connect from mitigation anchor "270" (left) to action anchor "90" (right)
+//
+//   Example - Mitigation for action at [0, 400]:
+//     action-exploit:        [0, 400]
+//     coa-patch-systems:     [350, 400]   // Same y, offset right
+//
+// FOR MITIGATIONS THAT APPLY TO MULTIPLE ACTIONS:
+//   - Position between the actions vertically
+//   - Connect to multiple actions using different anchor positions
+//
+//   Example - One mitigation for two actions:
+//     action-1:        [0, 400]
+//     action-2:        [0, 600]
+//     coa-shared:      [350, 500]   // Midpoint y-coordinate
+//     // Connect: coa anchor "240" -> action-1 anchor "90"
+//     // Connect: coa anchor "300" -> action-2 anchor "90"
+
+// -----------------------------------------------------------------------------
+// FLOW OBJECT POSITIONING
+// -----------------------------------------------------------------------------
+// The flow object (canvas metadata) should be positioned in the top-left:
+//   flow: [-800, -200]  // Away from the main diagram
+//
+// This keeps it visible but out of the way of the actual attack flow.
+
+// -----------------------------------------------------------------------------
+// CAMERA SETTINGS
+// -----------------------------------------------------------------------------
+// Set the camera to center on the main content:
+//
+// CALCULATE center point:
+//   camera_x = (min_x + max_x) / 2
+//   camera_y = (min_y + max_y) / 2
+//
+// ZOOM LEVELS:
+//   k: 1.0  - Full size (small diagrams, 3-5 objects)
+//   k: 0.7  - Slightly zoomed out (medium diagrams, 6-10 objects)
+//   k: 0.5  - Half size (large diagrams, 10-20 objects)
+//   k: 0.4  - More zoomed out (very large diagrams, 20+ objects)
+//   k: 0.3  - Significantly zoomed out (complex diagrams with many branches)
+
+// -----------------------------------------------------------------------------
+// ANCHOR/LATCH/HANDLE POSITIONING
+// -----------------------------------------------------------------------------
+// These should be positioned relative to their parent objects:
+//
+// ANCHOR OFFSETS (from object center):
+//   Position 0 (top):      [0, -50]
+//   Position 90 (right):   [100, 0]
+//   Position 180 (bottom): [0, 50]
+//   Position 270 (left):   [-100, 0]
+//   branch:True:           [50, 30]    // Lower-right of condition
+//   branch:False:          [-50, 30]   // Lower-left of condition
+//
+// LATCH OFFSETS (from anchor, toward connection):
+//   Add 10-20px in the direction of the connection
+//   Example: Anchor at [100, 0] connecting right -> latch at [110, 0]
+//
+// HANDLE POSITIONING:
+//   Place at the midpoint between source and target latches
+//   handle_x = (source_latch_x + target_latch_x) / 2
+//   handle_y = (source_latch_y + target_latch_y) / 2
+
+// -----------------------------------------------------------------------------
+// COMPLETE LAYOUT EXAMPLE
+// -----------------------------------------------------------------------------
+// Attack flow with condition, 3 parallel actions, and reconvergence:
+//
+//                    [Condition]          [Note]
+//                        |
+//                   [Operator]
+//                   /    |    \
+//              [Act-A] [Act-B] [Act-C]    [Mitigation]
+//                   \    |    /
+//                    [Final]              [Infrastructure]
+//
+// LAYOUT:
+//   "flow":           [-700, -100]
+//   "note":           [-400, 0]
+//   "condition":      [0, 0]
+//   "operator":       [0, 200]
+//   "action-a":       [-250, 400]
+//   "action-b":       [0, 400]
+//   "action-c":       [250, 400]
+//   "mitigation":     [500, 400]
+//   "action-final":   [0, 600]
+//   "infrastructure": [350, 600]
+//
+// CAMERA (centered on content):
+//   "camera": { "x": 0, "y": 300, "k": 0.6 }
+
+// =============================================================================
+// CONNECTION PATTERN REFERENCE
+// =============================================================================
+// To connect Object A to Object B:
+// 1. Choose anchor positions based on flow direction:
+//    - Top-to-bottom: source anchor "180" (bottom), target anchor "0" (top)
+//    - Left-to-right: source anchor "90" (right), target anchor "270" (left)
+//    - Condition true branch: source "branch:True", target "0" (top)
+//    - Condition false branch: source "branch:False", target "0" (top)
+//    - Mitigation to action: source "270" (left), target "90" (right)
+//
+// 2. Create connection objects:
+//    a. generic_latch for source (add UUID to source anchor's latches array)
+//    b. generic_latch for target (add UUID to target anchor's latches array)
+//    c. generic_handle for line midpoint
+//    d. dynamic_line referencing source latch, target latch, and handle
+//
+// 3. Add dynamic_line UUID to flow.objects array
+// 4. Add layout positions for all new objects
+
+// =============================================================================
+// ANCHOR TYPE REFERENCE (Position -> Type)
+// =============================================================================
+// Position  | Type              | Location on object    | Use for
+// ----------|-------------------|-----------------------|------------------
+// 0         | horizontal_anchor | Top center            | Input from above
+// 30        | horizontal_anchor | Top right             | Secondary input
+// 60        | vertical_anchor   | Right upper           | Side connections
+// 90        | vertical_anchor   | Right center          | Output to right / Mitigation link
+// 120       | vertical_anchor   | Right lower           | Side connections
+// 150       | horizontal_anchor | Bottom right          | Fan-out outputs
+// 180       | horizontal_anchor | Bottom center         | Output to below
+// 210       | horizontal_anchor | Bottom left           | Fan-out outputs
+// 240       | vertical_anchor   | Left lower (NOT cond) | Side connections
+// 270       | vertical_anchor   | Left center (NOT cond)| Input from left / Mitigation source
+// 300       | vertical_anchor   | Left upper (NOT cond) | Side connections
+// 330       | horizontal_anchor | Top left              | Secondary input
+// branch:True  | vertical_anchor | Condition output     | True path (typically right/down)
+// branch:False | vertical_anchor | Condition output     | False path (typically left/down)
+
+// =============================================================================
+// OBJECT ANCHOR COUNTS
+// =============================================================================
+// Object Type      | Anchors
+// -----------------|------------------
+// action           | 12 positional (0-330)
+// AND_operator     | 12 positional (0-330)
+// OR_operator      | 12 positional (0-330)
+// infrastructure   | 12 positional (0-330)
+// note             | 12 positional (0-330)
+// course_of_action | 12 positional (0-330)
+// asset            | 12 positional (0-330)
+// malware          | 12 positional (0-330)
+// tool             | 12 positional (0-330)
+// condition        | 9 positional (0,30,60,90,120,150,180,210,330) + branch:True + branch:False = 11 total
+
+// =============================================================================
+// ADDITIONAL OBJECT TYPES (Same structure as action/infrastructure)
+// =============================================================================
+// - asset: Generic asset object
+// - malware: Malware object with malware_types, is_family, aliases, etc.
+// - tool: Tool object with tool_types, aliases, tool_version
+// - threat_actor: Threat actor information
+// - campaign: Campaign information
+// - course_of_action: Mitigation/defense object (see example above)
+// - file: STIX observable file object
+// - process: STIX observable process object
+// - software: STIX observable software object
+// - user_account: STIX observable user account object
+// - directory: STIX observable directory object
+// - windows_registry_key: STIX observable registry key object
+
+// =============================================================================
+// LAYOUT CHECKLIST (Before finalizing an AFB file)
+// =============================================================================
+// [ ] Main attack flow follows consistent direction (top-to-bottom recommended)
+// [ ] Sequential events are evenly spaced vertically (200px apart)
+// [ ] Parallel actions are evenly spread horizontally and centered
+// [ ] Condition branches offset symmetrically left/right
+// [ ] Infrastructure objects positioned to the right of related actions
+// [ ] Notes positioned to the left of the main flow
+// [ ] Mitigations (course_of_action) positioned to the right of their actions
+// [ ] No overlapping objects
+// [ ] Connection lines don't cross unnecessarily
+// [ ] Flow object positioned in top-left corner, away from diagram
+// [ ] Camera centered on the content with appropriate zoom level
+// [ ] All anchors, latches, and handles have layout positions
